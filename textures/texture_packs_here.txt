@@ -1,0 +1,1 @@
+Coloca tus carpetas de paquetes de texturas en esta carpeta. Las texturas del paquete "server" serán utilizadas por el servidor.
