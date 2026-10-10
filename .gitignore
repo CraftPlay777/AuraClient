@@ -72,7 +72,6 @@ AppDir
 !/mods/mods_here.txt
 /worlds/*
 !/worlds/worlds_here.txt
-/clientmods/*
 !/clientmods/preview/
 /client/mod_storage/
 /mod_data
