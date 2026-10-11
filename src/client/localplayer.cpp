@@ -543,21 +543,6 @@ void LocalPlayer::move(f32 dtime, Environment *env)
 
 void LocalPlayer::applyControl(float dtime, Environment *env)
 {
-// ===== Hack client: comando .speed =====
-void LocalPlayer::setHackSpeed(float speed)
-{
-	if (speed < 0.1f)
-		speed = 0.1f;
-	m_hack_speed = speed;
-
-	// Aplicar directamente al physics_override (misma escala que Minetest.conf)
-	physics_override.speed_walk = speed;
-	physics_override.speed_fast = speed * 2.0f;
-	physics_override.speed_crouch = speed * 0.5f;
-	physics_override.speed_climb = speed;
-	physics_override.speed = 1.0f;
-}
-// =======================================
 
 	// Clear stuff
 	swimming_vertical = false;
@@ -756,6 +741,22 @@ void LocalPlayer::setHackSpeed(float speed)
 		incH * physics_override.speed * slip_factor, incV * physics_override.speed,
 		pitch_move);
 }
+
+// ===== Hack client: comando .speed =====
+void LocalPlayer::setHackSpeed(float speed)
+{
+	if (speed < 0.1f)
+		speed = 0.1f;
+	m_hack_speed = speed;
+
+	// Aplicar directamente al physics_override (misma escala que Minetest.conf)
+	physics_override.speed_walk = speed;
+	physics_override.speed_fast = speed * 2.0f;
+	physics_override.speed_crouch = speed * 0.5f;
+	physics_override.speed_climb = speed;
+	physics_override.speed = 1.0f;
+}
+// =======================================
 
 v3s16 LocalPlayer::getStandingNodePos()
 {
