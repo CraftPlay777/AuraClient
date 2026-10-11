@@ -48,6 +48,10 @@ android {
 		}
 	}
 
+	compileOptions {
+		sourceCompatibility JavaVersion.VERSION_1_8
+		targetCompatibility JavaVersion.VERSION_1_8
+	}
 	namespace 'net.minetest.minetest'
 }
 
@@ -108,9 +112,6 @@ tasks.register("prepareAssets") {
 		copy {
 			from "${localeFolder}" into "${assetsFolder}/locale"
 		}
-		copy {
-			from "${projRoot}/clientmods" into "${assetsFolder}/clientmods"
-		}
 
 		file("${assetsFolder}/.nomedia").text = ""
 	}
@@ -132,5 +133,5 @@ clean {
 
 dependencies {
 	implementation project(':native')
-	implementation 'androidx.appcompat:appcompat:1.7.1'
+	implementation 'androidx.appcompat:appcompat:1.6.1'
 }
