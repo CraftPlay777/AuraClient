@@ -158,6 +158,7 @@ public:
 	inline Lighting& getLighting() { return m_lighting; }
 
 	inline PlayerSettings &getPlayerSettings() { return m_player_settings; }
+
 // ===== Hack client: comando .speed =====
 	void setHackSpeed(float speed);
 	float getHackSpeed() const { return m_hack_speed; }
@@ -208,9 +209,11 @@ private:
 	float m_zoom_fov = 0.0f;
 	bool m_autojump = false;
 	float m_autojump_time = 0.0f;
+	
 // ===== Hack client: comando .speed =====
 	float m_hack_speed = 1.0f;
 	// =======================================
+	
 	v3f m_added_velocity = v3f(0.0f); // in BS-space; cleared on each move()
 
 	GenericCAO *m_cao = nullptr;

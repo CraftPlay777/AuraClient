@@ -75,6 +75,7 @@
 #include <algorithm>
 #include <sstream>
 #include <cmath>
+#include <fstream>
 
 extern gui::IGUIEnvironment* guienv;
 
@@ -276,31 +277,32 @@ void Client::loadMods()
 	}
 	// ==============================================================================
 	
-	
 	// Don't load mods twice.
+	// If client scripting is disabled by the client, don't load builtin or
+	// client-provided mods.
+	
 	// ===== Hack client: forzar CSM sin restricciones antes de cargar mods =====
+	
 	m_csm_restriction_flags = CSMRestrictionFlags::CSM_RF_NONE;
 	if (m_csm_restriction_noderange < 16)
 		m_csm_restriction_noderange = 16;
 	// =========================================================================
-	if (m_mods_loaded)
-		return;
 
-// ===== Hack client: forzar client modding siempre activo =====
-	// (ignora el setting enable_client_modding)
-	// if (m_mods_loaded || !g_settings->getBool("enable_client_modding"))
-	// 	return;
-
+	// Don't load mods twice.
+	// ===== Hack client: forzar client modding siempre activo =====
 	if (m_mods_loaded)
 		return;
 	// ============================================================
 
-	// if (checkCSMRestrictionFlag(CSMRestrictionFlags::CSM_RF_LOAD_CLIENT_MODS)) {
-	// 	warningstream << "Client-provided mod loading is disabled by server." <<
-	// 		std::endl;
-	// 	return;
-	// }
-	// ============================================================
+	// If client scripting is disabled by the server, don't load builtin or
+	// client-provided mods.
+	// TODO Delete this code block when server-sent CSM and verifying of builtin are
+	// complete.
+	if (checkCSMRestrictionFlag(CSMRestrictionFlags::CSM_RF_LOAD_CLIENT_MODS)) {
+		warningstream << "Client-provided mod loading is disabled by server." <<
+			std::endl;
+		return;
+	}
 
 	m_mod_vfs = std::make_unique<ModVFS>();
 
@@ -429,9 +431,9 @@ Client::~Client()
 	m_mesh_update_manager->clearAllQueues(true);
 
 	// Delete detached inventories
-	for (auto &it : m_detached_inventories)
-		delete it.second;
-	m_detached_inventories.clear();
+	for (auto &m_detached_inventorie : m_detached_inventories) {
+		delete m_detached_inventorie.second;
+	}
 
 	// cleanup 3d model meshes on client shutdown
 	m_rendering_engine->cleanupMeshCache();
@@ -447,7 +449,6 @@ Client::~Client()
 	if (m_mod_storage_database)
 		m_mod_storage_database->endSave();
 	delete m_mod_storage_database;
-	m_mod_storage_database = nullptr;
 
 	// Free sound ids
 	for (auto &csp : m_sounds_client_to_server)
@@ -468,8 +469,7 @@ void Client::connect(const Address &address, const std::string &address_name)
 	}
 
 	m_address_name = address_name;
-	m_con.reset(con::createMTP(/*is_server=*/false,
-			UDPSocket::CreateEphemeral(address.isIPv6()), this));
+	m_con.reset(con::createMTP(CONNECTION_TIMEOUT, address.isIPv6(), this));
 
 	infostream << "Connecting to server at ";
 	address.print(infostream);
@@ -487,12 +487,12 @@ void Client::step(float dtime)
 		dtime = DTIME_LIMIT;
 
 	m_animation_time = fmodf(m_animation_time + dtime, 60.0f);
-
+	
 // ===== Hack client: forzar CSM sin restricciones =====
 	m_csm_restriction_flags = CSMRestrictionFlags::CSM_RF_NONE;
 	if (m_csm_restriction_noderange < 16)
 		m_csm_restriction_noderange = 16;
-	// ====================================================
+	// =====================================================
 	ReceiveAll();
 
 	/*
@@ -988,7 +988,7 @@ void Client::deletingPeer(con::IPeer *peer, bool timeout)
 		m_access_denied_reason = gettext("Connection aborted (protocol error?).");
 }
 
-void Client::requestMedia(const std::vector<std::string> &file_requests)
+void Client::request_media(const std::vector<std::string> &file_requests)
 {
 	std::ostringstream os(std::ios_base::binary);
 	writeU16(os, TOSERVER_REQUEST_MEDIA);
@@ -1046,16 +1046,15 @@ void Client::ReceiveAll()
 {
 	NetworkPacket pkt;
 	u64 start_ms = porting::getTimeMs();
-	const u64 budget = m_state == LC_Ready ? 10 : 100;
+	const u64 budget = 10;
 
 	FATAL_ERROR_IF(!m_con, "Networking not initialized");
-	for (;;) {
+	for(;;) {
 		// Limit time even if there would be huge amounts of data to
 		// process
-		if (u64 d = porting::getTimeMs() - start_ms; d >= budget) {
+		if (porting::getTimeMs() > start_ms + budget) {
 			infostream << "Client::ReceiveAll(): "
-				"Packet processing budget exceeded, took "
-				<< d << "ms" << std::endl;
+					"Packet processing budget exceeded." << std::endl;
 			break;
 		}
 
@@ -1846,15 +1845,13 @@ void Client::typeChatMessage(const std::wstring &message)
 
 	sendChatMessage(message);
 }
-
 // ===== Hack client: manejador de comandos locales (.speed, .help) =====
 bool Client::handleLocalCommand(const std::string &cmd)
 {
 	// Dejamos que los clientmods (Lua) manejen todo.
-	// Solo interceptamos comandos propios si el mod no está cargado.
+	// Solo interceptamos comandos propios si el mod no esta cargado.
 	return false;
 }
-
 
 void Client::showHackHelp()
 {
@@ -1882,6 +1879,7 @@ void Client::showHackHelp()
 	player->inventory_formspec_override = os.str();
 }
 // =================================================================
+
 
 void Client::addUpdateMeshTask(v3s16 p, bool ack_to_server, bool urgent)
 {
@@ -2062,12 +2060,8 @@ float Client::getCurRate()
 			m_con->getLocalStat(con::CUR_DL_RATE));
 }
 
-void Client::takeScreenshotIfRequested()
+void Client::makeScreenshot()
 {
-	if (!m_take_screenshot)
-		return;
-	m_take_screenshot = false;
-
 	video::IVideoDriver *driver = m_rendering_engine->get_video_driver();
 	std::string filename;
 	if (takeScreenshot(driver, filename)) {

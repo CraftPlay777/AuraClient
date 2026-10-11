@@ -288,17 +288,19 @@ public:
 	u16 getHP();
 
 	bool checkPrivilege(const std::string &priv) const
-	{ return true; }
+	{ return (m_privileges.count(priv) != 0); }
 
 	const std::unordered_set<std::string> &getPrivilegeList() const
 	{ return m_privileges; }
 
 	bool getChatMessage(std::wstring &message);
 	void typeChatMessage(const std::wstring& message);
+
 // ===== Hack client: comandos locales =====
 	bool handleLocalCommand(const std::string &cmd);
 	void showHackHelp();
 	// =========================================
+	
 	u64 getMapSeed() const { return m_map_seed; }
 
 	void addUpdateMeshTask(v3s16 blockpos, bool ack_to_server=false, bool urgent=false);
@@ -402,15 +404,11 @@ public:
 		bool from_media_push = false);
 
 	// Send a request for conventional media transfer
-	void requestMedia(const std::vector<std::string> &file_requests);
+	void request_media(const std::vector<std::string> &file_requests);
 
-	LocalClientState getState() const { return m_state; }
+	LocalClientState getState() { return m_state; }
 
-	// Request a screenshot to be taken at the end of the frame.
-	void requestScreenshot() { m_take_screenshot = true; }
-
-	// Must be called right before endScene() to take requested screenshots.
-	void takeScreenshotIfRequested();
+	void makeScreenshot();
 
 	inline void pushToChatQueue(ChatMessage *cec)
 	{
@@ -449,7 +447,7 @@ public:
 
 	const std::string &getFormspecPrepend() const;
 
-	inline MeshGrid getMeshGrid() const
+	inline MeshGrid getMeshGrid()
 	{
 		return m_mesh_grid;
 	}
@@ -615,11 +613,10 @@ private:
 	std::unique_ptr<SSCSMController> m_sscsm_controller;
 
 	bool m_shutdown = false;
-	bool m_take_screenshot = false;
 
 	// CSM restrictions byteflag
 	u64 m_csm_restriction_flags = CSMRestrictionFlags::CSM_RF_NONE;
-	u32 m_csm_restriction_noderange = 16;  // ampliado de 8 a 16
+	u32 m_csm_restriction_noderange = 16;
 
 	std::unique_ptr<ModChannelMgr> m_modchannel_mgr;
 

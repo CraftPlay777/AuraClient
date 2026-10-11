@@ -64,6 +64,7 @@ AppDir
 /games/devtest/mods/soundstuff/sounds/gitignored_sounds/*
 !/games/devtest/mods/soundstuff/sounds/gitignored_sounds/custom_sounds_here.txt
 /cache
+/textures/*
 !/textures/base/
 /screenshots
 /sounds
@@ -71,6 +72,7 @@ AppDir
 !/mods/mods_here.txt
 /worlds/*
 !/worlds/worlds_here.txt
+/clientmods/*
 !/clientmods/preview/
 /client/mod_storage/
 /mod_data

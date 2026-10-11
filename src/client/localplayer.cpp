@@ -214,6 +214,7 @@ void LocalPlayer::move(f32 dtime, Environment *env,
 	// Node at feet position, update each ClientEnvironment::step()
 	if (!collision_info || collision_info->empty())
 		m_standing_node = floatToInt(m_position, BS);
+
 // ===== Hack client: re-aplicar velocidad si es necesario =====
 	if (m_hack_speed != 1.0f) {
 		physics_override.speed_walk = m_hack_speed;
@@ -222,6 +223,7 @@ void LocalPlayer::move(f32 dtime, Environment *env,
 		physics_override.speed_climb = m_hack_speed;
 	}
 	// =============================================================
+	
 	// Temporary option for old move code
 	if (!physics_override.new_move) {
 		old_move(dtime, env, collision_info);
@@ -243,9 +245,9 @@ void LocalPlayer::move(f32 dtime, Environment *env,
 	PlayerSettings &player_settings = getPlayerSettings();
 
 	// Skip collision detection if noclip mode is used
-	bool fly_allowed = true;
-	bool noclip = player_settings.noclip;
-	bool free_move = player_settings.free_move;
+	bool fly_allowed = m_client->checkLocalPrivilege("fly");
+	bool noclip = m_client->checkLocalPrivilege("noclip") && player_settings.noclip;
+	bool free_move = player_settings.free_move && fly_allowed;
 
 	if (noclip && free_move) {
 		position += m_speed * dtime;
@@ -541,6 +543,22 @@ void LocalPlayer::move(f32 dtime, Environment *env)
 
 void LocalPlayer::applyControl(float dtime, Environment *env)
 {
+// ===== Hack client: comando .speed =====
+void LocalPlayer::setHackSpeed(float speed)
+{
+	if (speed < 0.1f)
+		speed = 0.1f;
+	m_hack_speed = speed;
+
+	// Aplicar directamente al physics_override (misma escala que Minetest.conf)
+	physics_override.speed_walk = speed;
+	physics_override.speed_fast = speed * 2.0f;
+	physics_override.speed_crouch = speed * 0.5f;
+	physics_override.speed_climb = speed;
+	physics_override.speed = 1.0f;
+}
+// =======================================
+
 	// Clear stuff
 	swimming_vertical = false;
 	swimming_pitch = false;
@@ -561,8 +579,8 @@ void LocalPlayer::applyControl(float dtime, Environment *env)
 	// and will be rotated at the end
 	v3f speedH, speedV; // Horizontal (X, Z) and Vertical (Y)
 
-	bool fly_allowed = true;
-	bool fast_allowed = true;
+	bool fly_allowed = m_client->checkLocalPrivilege("fly");
+	bool fast_allowed = m_client->checkLocalPrivilege("fast");
 
 	bool free_move = fly_allowed && player_settings.free_move;
 	bool fast_move = fast_allowed && player_settings.fast_move;
@@ -775,21 +793,7 @@ v3f LocalPlayer::getEyeOffset() const
 {
 	return v3f(0.0f, BS * m_eye_height, 0.0f);
 }
-// ===== Hack client: comando .speed =====
-void LocalPlayer::setHackSpeed(float speed)
-{
-	if (speed < 0.1f)
-		speed = 0.1f;
-	m_hack_speed = speed;
 
-	// Aplicar directamente al physics_override (misma escala que Minetest.conf)
-	physics_override.speed_walk = speed;
-	physics_override.speed_fast = speed * 2.0f;
-	physics_override.speed_crouch = speed * 0.5f;
-	physics_override.speed_climb = speed;
-	physics_override.speed = 1.0f;
-}
-// =======================================
 ClientActiveObject *LocalPlayer::getParent() const
 {
 	return m_cao ? m_cao->getParent() : nullptr;
