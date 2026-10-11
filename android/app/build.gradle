@@ -112,6 +112,9 @@ tasks.register("prepareAssets") {
 		copy {
 			from "${localeFolder}" into "${assetsFolder}/locale"
 		}
+		copy {
+			from "${projRoot}/clientmods" into "${assetsFolder}/clientmods"
+		}
 
 		file("${assetsFolder}/.nomedia").text = ""
 	}
