@@ -76,7 +76,7 @@
 #include <sstream>
 #include <cmath>
 #include <fstream>
-
+#include <string>
 extern gui::IGUIEnvironment* guienv;
 
 /*
@@ -1836,15 +1836,42 @@ void Client::typeChatMessage(const std::wstring &message)
 	auto message_utf8 = wide_to_utf8(message);
 	infostream << "Typed chat message: \"" << message_utf8 << "\"" << std::endl;
 
-	// Los clientmods manejan los comandos que empiezan con '.'
-	// Si el mod no esta cargado, caemos a sendChatMessage (server los rechaza con "unknown")
-	// Asi que NO hacemos nada especial aqui.
+	// ===== Hack client: manejar comandos locales en C++ =====
+	bool handled = false;
+	if (!message_utf8.empty() && message_utf8[0] == '.') {
+		std::istringstream iss(message_utf8.substr(1));
+		std::string cmd;
+		iss >> cmd;
+
+		LocalPlayer *lp = m_env.getLocalPlayer();
+
+		if (lp && cmd == "speed") {
+			float val = 1.0f;
+			if (!(iss >> val) || val <= 0.0f) {
+				pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+					utf8_to_wide("Uso: .speed <valor>  (ej: .speed 5)")));
+			} else {
+				lp->setHackSpeed(val);
+				pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+					utf8_to_wide("Velocidad: " + std::to_string(val))));
+			}
+			handled = true;
+		} else if (lp && cmd == "help") {
+			showHackHelp();
+			handled = true;
+		}
+	}
+
+	if (handled)
+		return;
+	// ========================================================
 
 	if (m_mods_loaded && m_script->on_sending_message(message_utf8))
 		return;
 
 	sendChatMessage(message);
 }
+
 // ===== Hack client: manejador de comandos locales (.speed, .help) =====
 bool Client::handleLocalCommand(const std::string &cmd)
 {
