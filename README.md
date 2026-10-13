@@ -22,8 +22,15 @@ Lo especial de este cliente es que
 ## Comandos locales
 Puedes usar:
 ### speed
-- .speed {bloques por segundo} | para configurar tu velocidad (No te pases de 3)
-- .speed off | apaga la velocidad confugurada y usa directo la del server.
+```
+- .speed {bloques por segundo}
+```
+↑) para configurar tu velocidad (No te pases de 3)
+---
+```
+- .speed off
+```
+↑) apaga la velocidad confugurada y usa directo la del server.
 
 
 # Compilación 
