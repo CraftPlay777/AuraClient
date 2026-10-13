@@ -20,18 +20,17 @@ Lo especial de este cliente es que
 - Tiene priv de fast
 
 ## Comandos locales
-Puedes usar:
 ### speed
+
+- configurar tu velocidad (No te pases de 3)
 ```
 .speed {bloques por segundo}
 ```
-configurar tu velocidad (No te pases de 3)
 ---
-
+apaga la velocidad confugurada y usa directo la del server.
 ```
 .speed off
 ```
-apaga la velocidad confugurada y usa directo la del server.
---
+---
 
 # Compilación 
