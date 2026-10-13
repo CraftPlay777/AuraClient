@@ -162,6 +162,7 @@ public:
 // ===== Hack client: comando .speed =====
 	void setHackSpeed(float speed);
 	float getHackSpeed() const { return m_hack_speed; }
+	void setHackSpeedOff();
 	// =======================================
 private:
 	void accelerate(const v3f &target_speed, const f32 max_increase_H,

@@ -1846,14 +1846,27 @@ void Client::typeChatMessage(const std::wstring &message)
 		LocalPlayer *lp = m_env.getLocalPlayer();
 
 		if (lp && cmd == "speed") {
-			float val = 1.0f;
-			if (!(iss >> val) || val <= 0.0f) {
+			std::string arg;
+			iss >> arg;
+
+			if (arg == "off") {
+				lp->setHackSpeedOff();
 				pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
-					utf8_to_wide("Uso: .speed <valor>  (ej: .speed 5)")));
+					utf8_to_wide("Velocidad: default del server")));
 			} else {
-				lp->setHackSpeed(val);
-				pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
-					utf8_to_wide("Velocidad: " + std::to_string(val))));
+				float val = 1.0f;
+				if (arg.empty() || !(std::istringstream(arg) >> val) || val <= 0.0f) {
+					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+						utf8_to_wide("Uso: .speed <valor|off>  (ej: .speed 5)")));
+				} else {
+					lp->setHackSpeed(val);
+					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+						utf8_to_wide("Velocidad: " + std::to_string(val))));
+					if (val > 3.0f) {
+						pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+							utf8_to_wide("Una velocidad mayor a 3 puede causar trabas a largo plazo.")));
+					}
+				}
 			}
 			handled = true;
 		} else if (lp && cmd == "help") {
@@ -1871,6 +1884,7 @@ void Client::typeChatMessage(const std::wstring &message)
 
 	sendChatMessage(message);
 }
+
 
 // ===== Hack client: manejador de comandos locales (.speed, .help) =====
 bool Client::handleLocalCommand(const std::string &cmd)

@@ -543,7 +543,12 @@ void LocalPlayer::move(f32 dtime, Environment *env)
 
 void LocalPlayer::applyControl(float dtime, Environment *env)
 {
-
+   // ===== Hack client: forzar privs locales =====
+	PlayerSettings &ps = getPlayerSettings();
+	// no hacemos nada especial; solo garantizamos que se lean
+	(void)ps;
+	// =========================================
+	
 	// Clear stuff
 	swimming_vertical = false;
 	swimming_pitch = false;
@@ -757,6 +762,17 @@ void LocalPlayer::setHackSpeed(float speed)
 	physics_override.speed = 1.0f;
 }
 // =======================================
+void LocalPlayer::setHackSpeedOff()
+{
+	m_hack_speed = 1.0f;
+	// Volver a los valores default del server (physics_override se
+	// rellena desde el server en cada reconexión; aquí reseteamos a 1.0)
+	physics_override.speed_walk = 1.0f;
+	physics_override.speed_fast = 1.0f;
+	physics_override.speed_crouch = 1.0f;
+	physics_override.speed_climb = 1.0f;
+	physics_override.speed = 1.0f;
+}
 
 v3s16 LocalPlayer::getStandingNodePos()
 {
