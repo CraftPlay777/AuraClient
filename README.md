@@ -27,10 +27,29 @@ Lo especial de este cliente es que
 .speed {bloques por segundo}
 ```
 ---
-apaga la velocidad confugurada y usa directo la del server.
+apaga la velocidad configurada y usa directo la del server.
 ```
 .speed off
 ```
 ---
 
 # Compilación 
+Puedes compilar este repo haciendo lo siguiente:
+
+- Haz un fork de este repo.
+- Dirígete a la sección de "Actions" de arriba de tu repo
+- Ve a worlflows
+- Busca "Build Luanti APK" y presionarlo
+- Toca en "Run"
+- Ahora espera unos 15 minutos y la APK se compilará para las 4 arquitecturas Android.
+- Descarga el zip de abajo
+- Instale el APK de tu arquitectura Android
+- Listo
+
+# Información de HackClient
+Este hack client funciona a base de la modificación de 4 archivos dentro de src/cliente.
+En la V1 ,la carpeta /clientmods/ no tiene función ya que los mods hacks se manejan directo en c++ code.
+
+
+# NOTA
+Recuerda usar este cliente hack de manera responsable y -, bueno a quien le importa,usen el cliente para molestar gente :v
