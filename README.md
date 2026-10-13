@@ -23,14 +23,15 @@ Lo especial de este cliente es que
 Puedes usar:
 ### speed
 ```
-- .speed {bloques por segundo}
+.speed {bloques por segundo}
 ```
-↑) para configurar tu velocidad (No te pases de 3)
+configurar tu velocidad (No te pases de 3)
 ---
-```
-- .speed off
-```
-↑) apaga la velocidad confugurada y usa directo la del server.
 
+```
+.speed off
+```
+apaga la velocidad confugurada y usa directo la del server.
+--
 
 # Compilación 
