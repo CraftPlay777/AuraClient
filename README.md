@@ -50,6 +50,13 @@ Puedes compilar este repo haciendo lo siguiente:
 Este hack client funciona a base de la modificación de 4 archivos dentro de src/cliente.
 En la V1 ,la carpeta /clientmods/ no tiene función ya que los mods hacks se manejan directo en c++ code.
 
+# Instalación 
+- Ve a [Este sitio](https://github.com/CraftPlay777/AuraClient/releases/tag/V1)
+- Busca tu tu arquitectura Android (Nota: Normalmente ,si tú celular es algo viejo ,es armv7l ,si es un celular más moderno probablemente sea arm64v8 ,los otros creo que eran para emuladores Android.
+- Descarga el archivo
+- Instala la APK
+- Listo 
+
 
 # NOTA
-Recuerda usar este cliente hack de manera responsable y -, bueno a quien le importa,usen el cliente para molestar gente :v
+Recuerda usar este cliente hack de manera responsable y -, bueno a quien le importa,usen el cliente para molestar gente en servers :v
