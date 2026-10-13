@@ -10,7 +10,7 @@
 	<application
 		android:allowBackup="false"
 		android:icon="@mipmap/ic_launcher"
-		android:label="@string/label"
+		android:label="Luanti Aura Client"
 		android:resizeableActivity="false"
 		android:appCategory="game"
 		tools:ignore="UnusedAttribute">
