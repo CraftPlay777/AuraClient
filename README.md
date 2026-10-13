@@ -47,7 +47,7 @@ Puedes compilar este repo haciendo lo siguiente:
 - Listo
 
 # Información de HackClient
-Este hack client funciona a base de la modificación de 4 archivos dentro de src/cliente.
+Este hack client funciona a base de la modificación de 4 archivos dentro de src/client.
 En la V1 ,la carpeta /clientmods/ no tiene función ya que los mods hacks se manejan directo en c++ code.
 
 # Instalación 
