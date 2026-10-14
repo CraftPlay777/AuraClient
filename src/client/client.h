@@ -14,6 +14,7 @@
 #include "network/peerhandler.h"
 #include "util/numeric.h"
 #include "util/string.h" // StringMap
+#include "util/pointedthing.h"
 
 #include <map>
 #include <memory>
@@ -299,6 +300,17 @@ public:
 	bool handleLocalCommand(const std::string &cmd);
 	void showHackHelp();
 	// =========================================
+
+// ===== Hack client: auto-hit =====
+	void setHitRate(float hz);
+	void setHitOff();
+	bool hitEnabled() const { return m_hit_rate > 0.0f; }
+	float getHitRate() const { return m_hit_rate; }
+
+	// Game llama esto cada frame con el PointedThing actual
+	void setLastPointedThing(const PointedThing &pt) { m_last_pointed = pt; }
+	// ==================================
+	
 	
 	u64 getMapSeed() const { return m_map_seed; }
 
@@ -535,6 +547,13 @@ private:
 	float m_animation_time = 0.0f;
 	int m_crack_level = -1;
 	v3s16 m_crack_pos;
+	
+	// ===== Hack client: auto-hit =====
+	float m_hit_rate = 0.0f;
+	float m_hit_timer = 0.0f;
+	PointedThing m_last_pointed;
+	// ==================================
+	
 	std::queue<std::wstring> m_out_chat_queue;
 	u32 m_last_chat_message_sent;
 	float m_chat_message_allowance = 5.0f;

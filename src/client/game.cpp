@@ -2720,6 +2720,8 @@ void Game::processPlayerInteraction(f32 dtime, bool show_hud)
 			selected_def.pointabilities,
 			!runData.btn_down_for_dig,
 			camera_offset);
+			
+			client->setLastPointedThing(pointed);
 
 	if (pointed != runData.pointed_old)
 		infostream << "Pointing at " << pointed.dump() << std::endl;

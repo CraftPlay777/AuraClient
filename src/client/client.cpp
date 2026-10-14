@@ -59,6 +59,7 @@
 #include "network/connection.h"
 #include "network/networkexceptions.h"
 #include "network/networkpacket.h"
+#include "network/networkprotocol.h"
 #include "serialization.h"
 
 // Database
@@ -620,7 +621,26 @@ void Client::step(float dtime)
 		event->dtime = dtime;
 		m_sscsm_controller->runEvent(this, std::move(event));
 	}
+	
+// ===== Hack client: auto-hit =====
+	if (m_hit_rate > 0.0f && m_state == LC_Ready) {
+		m_hit_timer += dtime;
+		float interval = 1.0f / m_hit_rate;
+		while (m_hit_timer >= interval) {
+			m_hit_timer -= interval;
 
+			LocalPlayer *lp = m_env.getLocalPlayer();
+			if (lp) {
+				PointedThing pointed = m_env.getClientMap().getPointedThing();
+				// Solo golpear si apunta a algo y está en rango frontal
+				if (pointed.type != POINTEDTHING_NOTHING) {
+					interact(INTERACT_DIG, pointed);
+				}
+			}
+		}
+	}
+	// ==================================
+	
 	// Step environment (also handles player controls)
 	m_env.step(dtime);
 	m_sound->step(dtime);
@@ -1836,7 +1856,7 @@ void Client::typeChatMessage(const std::wstring &message)
 	auto message_utf8 = wide_to_utf8(message);
 	infostream << "Typed chat message: \"" << message_utf8 << "\"" << std::endl;
 
-	// ===== Hack client: manejar comandos locales en C++ =====
+// ===== Hack client: manejar comandos locales en C++ =====
 	bool handled = false;
 	if (!message_utf8.empty() && message_utf8[0] == '.') {
 		std::istringstream iss(message_utf8.substr(1));
@@ -1872,13 +1892,43 @@ void Client::typeChatMessage(const std::wstring &message)
 		} else if (lp && cmd == "help") {
 			showHackHelp();
 			handled = true;
+		} else if (lp && cmd == "hit") {
+			std::string arg;
+			iss >> arg;
+
+			if (arg == "off") {
+				setHitOff();
+				pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+					utf8_to_wide("Auto-hit: OFF")));
+			} else {
+				float val = 0.0f;
+				if (arg.empty() || !(std::istringstream(arg) >> val) || val <= 0.0f) {
+					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+						utf8_to_wide("Uso: .hit <golpes/seg|off>  (ej: .hit 10)")));
+				} else {
+					const float HIT_MAX = 30.0f;
+					if (val > HIT_MAX) {
+						pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+							utf8_to_wide("Valor muy alto, limitando a " + std::to_string((int)HIT_MAX))));
+						val = HIT_MAX;
+					}
+					setHitRate(val);
+					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+						utf8_to_wide("Auto-hit: " + std::to_string((int)val) + " golpes/seg")));
+					if (val > 10.0f) {
+						pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+							utf8_to_wide(">10 golpes/seg puede no funcionar bien en servers lentos.")));
+					}
+				}
+			}
+			handled = true;
 		}
 	}
 
 	if (handled)
 		return;
 	// ========================================================
-
+	
 	if (m_mods_loaded && m_script->on_sending_message(message_utf8))
 		return;
 
@@ -1902,21 +1952,27 @@ void Client::showHackHelp()
 
 	// Formspec estilo /help de Luanti
 	std::ostringstream os;
-	os << "size[10,7]"
+os << "size[10,8]"
 		<< "bgcolor[#00000080;true]"
 		<< "label[0.5,0.3;Comandos locales de AuraClient]"
 		<< "tablecolumns[color;text]"
-		<< "table[0.5,1;9.0,5.5;cmdtable;"
+		<< "table[0.5,1;9.0,6.5;cmdtable;"
 		<< "#FFFF00,.speed {valor},"
 		<< "#FFFFFF,Establece tu velocidad de movimiento.,"
 		<< "#FFFFFF,Usa la misma escala que Minetest.conf (por defecto 1.0).,"
-		<< "#FFFFFF,Valores normales: 1-10. Valores >11 pueden causar bugs.,"
+		<< "#FFFFFF,Valores normales: 1-10. Valores >3 pueden causar trabas.,"
+		<< "#FFFF00,.speed off,"
+		<< "#FFFFFF,Vuelve a la velocidad default del server.,"
+		<< "#FFFF00,.hit {n},"
+		<< "#FFFFFF,Activa el auto-golpe a lo que tengas delante.,"
+		<< "#FFFF00,.hit off,"
+		<< "#FFFFFF,Apaga el auto-golpe.,"
 		<< "#FFFF00,.help,"
 		<< "#FFFFFF,Muestra esta ayuda.,"
 		<< "#00FF00,Ejemplo: .speed 5,"
 		<< "#FFFFFF,Te mueves 5x mas rapido que lo normal."
 		<< "]";
-
+		
 	player->inventory_formspec_override = os.str();
 }
 // =================================================================
