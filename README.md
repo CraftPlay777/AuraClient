@@ -59,4 +59,5 @@ En la V1 ,la carpeta /clientmods/ no tiene función ya que los mods hacks se man
 
 
 # NOTA
-Recuerda usar este cliente hack de manera responsable y -, bueno a quien le importa,usen el cliente para molestar gente en servers :v
+Recuerda usar este cliente hack de manera responsable y -, bueno a quien le importa,usen el cliente para molestar gente en servers :v 
+
