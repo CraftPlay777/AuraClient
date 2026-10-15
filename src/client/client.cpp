@@ -1943,6 +1943,22 @@ bool Client::handleLocalCommand(const std::string &cmd)
 	return false;
 }
 
+// ===== Hack client: auto-hit =====
+void Client::setHitRate(float hz)
+{
+	if (hz < 0.0f)
+		hz = 0.0f;
+	m_hit_rate = hz;
+	m_hit_timer = 0.0f;
+}
+
+void Client::setHitOff()
+{
+	m_hit_rate = 0.0f;
+	m_hit_timer = 0.0f;
+}
+// ==================================
+
 void Client::showHackHelp()
 {
 	LocalPlayer *player = m_env.getLocalPlayer();
