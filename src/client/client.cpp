@@ -626,18 +626,17 @@ void Client::step(float dtime)
 	if (m_hit_rate > 0.0f && m_state == LC_Ready) {
 		m_hit_timer += dtime;
 		float interval = 1.0f / m_hit_rate;
-		while (m_hit_timer >= interval) {
+		int safety = 0;
+		while (m_hit_timer >= interval && safety < 64) {
 			m_hit_timer -= interval;
+			safety++;
 
-			LocalPlayer *lp = m_env.getLocalPlayer();
-			if (lp) {
-				PointedThing pointed = m_env.getClientMap().getPointedThing();
-				// Solo golpear si apunta a algo y está en rango frontal
-				if (pointed.type != POINTEDTHING_NOTHING) {
-					interact(INTERACT_DIG, pointed);
-				}
+			if (m_last_pointed.type != POINTEDTHING_NOTHING) {
+				interact(INTERACT_DIGGING_START, m_last_pointed);
 			}
 		}
+		if (m_hit_timer > interval * 64.0f)
+			m_hit_timer = 0.0f;
 	}
 	// ==================================
 	
