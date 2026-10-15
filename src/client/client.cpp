@@ -632,7 +632,7 @@ void Client::step(float dtime)
 			safety++;
 
 			if (m_last_pointed.type != POINTEDTHING_NOTHING) {
-				interact(INTERACT_DIGGING_START, m_last_pointed);
+				interact(INTERACT_START_DIGGING, m_last_pointed);
 			}
 		}
 		if (m_hit_timer > interval * 64.0f)
