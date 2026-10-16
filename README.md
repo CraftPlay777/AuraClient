@@ -20,16 +20,30 @@ Lo especial de este cliente es que
 - Tiene priv de fast
 
 ## Comandos locales
+---
 ### speed
 
 - configurar tu velocidad (No te pases de 3)
 ```
 .speed {bloques por segundo}
 ```
----
-apaga la velocidad configurada y usa directo la del server.
+
+- apaga la velocidad configurada y usa directo la del server.
 ```
 .speed off
+```
+---
+
+---
+### Hit
+- definir golpes por segundos
+```
+.hit {cantidad}
+```
+
+- Desactivar golpes
+```
+.hit off
 ```
 ---
 
