@@ -318,6 +318,7 @@ public:
 	bool clickEnabled() const { return m_click_enabled; }
 	float getClickDuration() const { return m_click_duration; }
 	int getClickRegen() const { return m_click_regen; }
+	bool clickHolding() const { return m_click_holding; }
 	
 	// Game llama esto cada frame con el PointedThing actual
 	void setLastPointedThing(const PointedThing &pt) { m_last_pointed = pt; }

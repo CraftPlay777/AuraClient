@@ -2734,6 +2734,16 @@ void Game::processPlayerInteraction(f32 dtime, bool show_hud)
 		player->control.dig = isKeyDown(KeyType::DIG);
 		player->control.place = isKeyDown(KeyType::PLACE);
 	}
+	
+	// ===== Hack client: auto-click fuerza el boton DIG =====
+	// Sobreescribimos control.dig tras el input real para que el server
+	// vea LMB pulsado mientras el .click esta "manteniendo". Necesario
+	// para armas automaticas (rawf / ctf_ranged) que leen
+	// get_player_control().LMB en su bucle de auto-fire.
+	if (client->clickEnabled() && client->clickHolding()) {
+		player->control.dig = true;
+	}
+	// ====================================================
 
 	// Note that updating the selection mesh every frame is not particularly efficient,
 	// but the halo rendering code is already inefficient so there's no point in optimizing it here

@@ -649,6 +649,11 @@ void Client::step(float dtime)
 				interact(INTERACT_USE, m_last_pointed);
 				m_click_holding = true;
 				m_click_timer = 0.0f;
+				// Forzar boton DIG pulsado (necesario para armas automaticas
+				// tipo rawf/ctf_ranged que leen get_player_control().LMB)
+				LocalPlayer *lp = m_env.getLocalPlayer();
+				if (lp)
+					lp->control.dig = true;
 			} else {
 				// Nada apuntado: esperar un poco antes de reintentar
 				m_click_timer += dtime;
@@ -664,6 +669,9 @@ void Client::step(float dtime)
 				interact(INTERACT_STOP_DIGGING, m_last_pointed);
 				m_click_holding = false;
 				m_click_timer = 0.0f;
+				LocalPlayer *lp = m_env.getLocalPlayer();
+				if (lp)
+					lp->control.dig = false;
 				m_click_regen_done++;
 
 				if (m_click_regen_done >= m_click_regen) {
@@ -1934,28 +1942,20 @@ void Client::typeChatMessage(const std::wstring &message)
 			iss >> arg1 >> arg2;
 
 			if (arg1 == "ok") {
-				if (!m_click_pending) {
+				if (!clickPending()) {
 					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
 						utf8_to_wide("No hay un .click pendiente. Usa primero .click {dur} {regen}")));
 				} else {
-					m_click_pending = false;
-					m_click_enabled = true;
-					m_click_regen_done = 0;
-					m_click_holding = false;
-					m_click_timer = 0.0f;
+					clickConfirm();
 					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
 						utf8_to_wide("Auto-click ACTIVADO: "
-							+ std::to_string((int)m_click_duration) + "s x "
-							+ std::to_string(m_click_regen) + " reps")));
+							+ std::to_string((int)getClickDuration()) + "s x "
+							+ std::to_string(getClickRegen()) + " reps")));
 					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
 						utf8_to_wide("Usa .click off para apagarlo")));
 				}
 			} else if (arg1 == "off") {
-				m_click_enabled = false;
-				m_click_pending = false;
-				m_click_holding = false;
-				m_click_timer = 0.0f;
-				m_click_regen_done = 0;
+				setClickOff();
 				pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
 					utf8_to_wide("Auto-click OFF")));
 			} else {
@@ -1968,9 +1968,7 @@ void Client::typeChatMessage(const std::wstring &message)
 					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
 						utf8_to_wide("Uso: .click {segundos} {repeticiones}  (ej: .click 30 5)")));
 				} else {
-					m_click_duration = dur;
-					m_click_regen = rep;
-					m_click_pending = true;
+					setClickParams(dur, rep);
 					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
 						utf8_to_wide("Bien, asegurate de que el item seleccionado no abra interfaces. Usa .click ok para confirmar")));
 				}
@@ -2047,6 +2045,34 @@ void Client::setHitOff()
 	m_hit_timer = 0.0f;
 }
 // ==================================
+
+void Client::clickConfirm()
+{
+	m_click_pending = false;
+	m_click_enabled = true;
+	m_click_regen_done = 0;
+	m_click_holding = false;
+	m_click_timer = 0.0f;
+}
+
+void Client::setClickParams(float duration, int regen)
+{
+	m_click_duration = duration;
+	m_click_regen = regen;
+	m_click_pending = true;
+}
+
+void Client::setClickOff()
+{
+	m_click_enabled = false;
+	m_click_pending = false;
+	m_click_holding = false;
+	m_click_timer = 0.0f;
+	m_click_regen_done = 0;
+	LocalPlayer *lp = m_env.getLocalPlayer();
+	if (lp)
+		lp->control.dig = false;
+}
 
 void Client::showHackHelp()
 {
