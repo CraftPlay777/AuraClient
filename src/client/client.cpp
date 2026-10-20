@@ -631,9 +631,10 @@ void Client::step(float dtime)
 			m_hit_timer -= interval;
 			safety++;
 
-			if (m_last_pointed.type != POINTEDTHING_NOTHING) {
-				interact(INTERACT_START_DIGGING, m_last_pointed);
-			}
+			// Solo golpear entidades (mobs, jugadores), no bloques
+		if (m_last_pointed.type == POINTEDTHING_OBJECT) {
+			interact(INTERACT_START_DIGGING, m_last_pointed);
+		}
 		}
 		if (m_hit_timer > interval * 64.0f)
 			m_hit_timer = 0.0f;
@@ -1913,7 +1914,7 @@ void Client::typeChatMessage(const std::wstring &message)
 					}
 					setHitRate(val);
 					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
-						utf8_to_wide("Auto-hit: " + std::to_string((int)val) + " golpes/seg")));
+						utf8_to_wide("Auto-hit (solo entidades): " + std::to_string((int)val) + " golpes/seg")));
 					if (val > 10.0f) {
 						pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
 							utf8_to_wide(">10 golpes/seg puede no funcionar bien en servers lentos.")));
@@ -1979,7 +1980,7 @@ os << "size[10,8]"
 		<< "#FFFF00,.speed off,"
 		<< "#FFFFFF,Vuelve a la velocidad default del server.,"
 		<< "#FFFF00,.hit {n},"
-		<< "#FFFFFF,Activa el auto-golpe a lo que tengas delante.,"
+		<< "#FFFFFF,Activa el auto-golpe solo a entidades (mobs/jugadores).,"
 		<< "#FFFF00,.hit off,"
 		<< "#FFFFFF,Apaga el auto-golpe.,"
 		<< "#FFFF00,.help,"
