@@ -641,6 +641,45 @@ void Client::step(float dtime)
 	}
 	// ==================================
 	
+	// ===== Hack client: auto-click (long hold) =====
+	if (m_click_enabled && m_state == LC_Ready) {
+		if (!m_click_holding) {
+			// Iniciar un nuevo "hold": pulsar
+			if (m_last_pointed.type != POINTEDTHING_NOTHING) {
+				interact(INTERACT_USE, m_last_pointed);
+				m_click_holding = true;
+				m_click_timer = 0.0f;
+			} else {
+				// Nada apuntado: esperar un poco antes de reintentar
+				m_click_timer += dtime;
+				if (m_click_timer >= 0.2f) {
+					m_click_timer = 0.0f;
+				}
+			}
+		} else {
+			// Mantenemos presionado hasta cumplir la duración
+			m_click_timer += dtime;
+			if (m_click_timer >= m_click_duration) {
+				// Soltar
+				interact(INTERACT_STOP_DIGGING, m_last_pointed);
+				m_click_holding = false;
+				m_click_timer = 0.0f;
+				m_click_regen_done++;
+
+				if (m_click_regen_done >= m_click_regen) {
+					// Terminamos todas las repeticiones
+					m_click_enabled = false;
+					m_click_regen_done = 0;
+					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+						utf8_to_wide("Auto-click: terminado ("
+							+ std::to_string(m_click_regen) + " repeticiones)")));
+				}
+			}
+		}
+	}
+	// ================================================
+	
+	
 	// Step environment (also handles player controls)
 	m_env.step(dtime);
 	m_sound->step(dtime);
@@ -1889,6 +1928,55 @@ void Client::typeChatMessage(const std::wstring &message)
 				}
 			}
 			handled = true;
+			
+			} else if (lp && cmd == "click") {
+			std::string arg1, arg2;
+			iss >> arg1 >> arg2;
+
+			if (arg1 == "ok") {
+				if (!m_click_pending) {
+					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+						utf8_to_wide("No hay un .click pendiente. Usa primero .click {dur} {regen}")));
+				} else {
+					m_click_pending = false;
+					m_click_enabled = true;
+					m_click_regen_done = 0;
+					m_click_holding = false;
+					m_click_timer = 0.0f;
+					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+						utf8_to_wide("Auto-click ACTIVADO: "
+							+ std::to_string((int)m_click_duration) + "s x "
+							+ std::to_string(m_click_regen) + " reps")));
+					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+						utf8_to_wide("Usa .click off para apagarlo")));
+				}
+			} else if (arg1 == "off") {
+				m_click_enabled = false;
+				m_click_pending = false;
+				m_click_holding = false;
+				m_click_timer = 0.0f;
+				m_click_regen_done = 0;
+				pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+					utf8_to_wide("Auto-click OFF")));
+			} else {
+				float dur = 0.0f;
+				int rep = 0;
+				bool ok1 = !arg1.empty() && (std::istringstream(arg1) >> dur);
+				bool ok2 = !arg2.empty() && (std::istringstream(arg2) >> rep);
+
+				if (!ok1 || !ok2 || dur <= 0.0f || rep <= 0) {
+					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+						utf8_to_wide("Uso: .click {segundos} {repeticiones}  (ej: .click 30 5)")));
+				} else {
+					m_click_duration = dur;
+					m_click_regen = rep;
+					m_click_pending = true;
+					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+						utf8_to_wide("Bien, asegurate de que el item seleccionado no abra interfaces. Usa .click ok para confirmar")));
+				}
+			}
+			handled = true;
+			
 		} else if (lp && cmd == "help") {
 			showHackHelp();
 			handled = true;
@@ -1983,6 +2071,11 @@ os << "size[10,8]"
 		<< "#FFFFFF,Activa el auto-golpe solo a entidades (mobs/jugadores).,"
 		<< "#FFFF00,.hit off,"
 		<< "#FFFFFF,Apaga el auto-golpe.,"
+		<< "#FFFF00,.click {seg} {reps},"
+		<< "#FFFFFF,Click largo (mantener) al item seleccionado.,"
+		<< "#FFFFFF,Requiere confirmar con .click ok.,"
+		<< "#FFFF00,.click off,"
+		<< "#FFFFFF,Apaga el auto-click.,"
 		<< "#FFFF00,.help,"
 		<< "#FFFFFF,Muestra esta ayuda.,"
 		<< "#00FF00,Ejemplo: .speed 5,"

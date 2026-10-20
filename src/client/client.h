@@ -306,7 +306,19 @@ public:
 	void setHitOff();
 	bool hitEnabled() const { return m_hit_rate > 0.0f; }
 	float getHitRate() const { return m_hit_rate; }
-
+	
+   // ===== Hack client: auto-click (long hold) =====
+	// click_rate: NO usado, reservado
+	// duration/regen se fijan con .click {dur} {regen}
+	void setClickParams(float duration, int regen);
+	void clickConfirm();   // .click ok
+	void setClickOff();    // .click off
+	void setClickPending(bool p) { m_click_pending = p; }
+	bool clickPending() const { return m_click_pending; }
+	bool clickEnabled() const { return m_click_enabled; }
+	float getClickDuration() const { return m_click_duration; }
+	int getClickRegen() const { return m_click_regen; }
+	
 	// Game llama esto cada frame con el PointedThing actual
 	void setLastPointedThing(const PointedThing &pt) { m_last_pointed = pt; }
 	// ==================================
@@ -553,6 +565,16 @@ private:
 	float m_hit_timer = 0.0f;
 	PointedThing m_last_pointed;
 	// ==================================
+	
+	// ===== Hack client: auto-click (long hold) =====
+	bool m_click_enabled = false;      // activado tras .click ok
+	bool m_click_pending = false;      // esperando .click ok
+	float m_click_duration = 1.0f;     // segundos de "mantenido"
+	int   m_click_regen = 1;           // veces a repetir
+	int   m_click_regen_done = 0;      // contador interno
+	float m_click_timer = 0.0f;        // temporizador del hold actual
+	bool m_click_holding = false;      // true mientras "mantenemos"
+	// ================================================
 	
 	std::queue<std::wstring> m_out_chat_queue;
 	u32 m_last_chat_message_sent;
