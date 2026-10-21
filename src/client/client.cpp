@@ -1571,6 +1571,11 @@ void Client::sendPlayerPos()
 			std::ceil(map.getWantedRange() * (1.0f / MAP_BLOCKSIZE)));
 
 	u32 keyPressed = player->control.getKeysPressed();
+	// ===== Hack client: auto-click fuerza LMB en el paquete =====
+	if (m_click_enabled && m_click_holding)
+		keyPressed |= (1 << 6); // DIG (ver GameKeyType, indice 6)
+	// ===========================================================
+	
 	bool camera_inverted = m_camera->getCameraMode() == CAMERA_MODE_THIRD_FRONT;
 	f32 movement_speed = player->control.movement_speed;
 	f32 movement_dir = player->control.movement_direction;
@@ -1626,7 +1631,11 @@ void Client::sendHaveMedia(const std::vector<u32> &tokens)
 	pkt << static_cast<u8>(tokens.size());
 	for (u32 token : tokens)
 		pkt << token;
-
+		
+    if (m_click_enabled)
+		infostream << "DEBUG click: sendPlayerPos keyPressed=" << keyPressed
+			<< " dig=" << player->control.dig << std::endl;
+			
 	Send(&pkt);
 }
 
