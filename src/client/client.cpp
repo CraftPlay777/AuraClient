@@ -1571,10 +1571,12 @@ void Client::sendPlayerPos()
 			std::ceil(map.getWantedRange() * (1.0f / MAP_BLOCKSIZE)));
 
 	u32 keyPressed = player->control.getKeysPressed();
-	// ===== Hack client: auto-click fuerza LMB en el paquete =====
+
+  // ===== Hack client: auto-click fuerza LMB en el paquete =====
 	if (m_click_enabled && m_click_holding)
-		keyPressed |= (1 << 6); // DIG (ver GameKeyType, indice 6)
+		keyPressed |= (1 << 7); // bit de dig en PlayerControl::getKeysPressed()
 	// ===========================================================
+	
 	
 	bool camera_inverted = m_camera->getCameraMode() == CAMERA_MODE_THIRD_FRONT;
 	f32 movement_speed = player->control.movement_speed;
@@ -1615,6 +1617,11 @@ void Client::sendPlayerPos()
 	player->last_movement_speed  = movement_speed;
 	player->last_movement_dir    = movement_dir;
 
+   // DEBUG temporal
+	if (m_click_enabled)
+		infostream << "DEBUG click: keyPressed=" << keyPressed
+			<< " dig=" << player->control.dig << std::endl;
+			
 	NetworkPacket pkt(TOSERVER_PLAYERPOS, 12 + 12 + 4 + 4 + 4 + 1 + 1 + 1 + 4 + 4);
 
 	writePlayerPos(player, &map, &pkt, camera_inverted);
@@ -1631,10 +1638,6 @@ void Client::sendHaveMedia(const std::vector<u32> &tokens)
 	pkt << static_cast<u8>(tokens.size());
 	for (u32 token : tokens)
 		pkt << token;
-		
-    if (m_click_enabled)
-		infostream << "DEBUG click: sendPlayerPos keyPressed=" << keyPressed
-			<< " dig=" << player->control.dig << std::endl;
 			
 	Send(&pkt);
 }
