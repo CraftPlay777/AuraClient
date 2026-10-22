@@ -644,22 +644,20 @@ void Client::step(float dtime)
 	// ===== Hack client: auto-click (long hold) =====
 	if (m_click_enabled && m_state == LC_Ready) {
 		if (!m_click_holding) {
-			// Iniciar un nuevo "hold": pulsar
-			if (m_last_pointed.type != POINTEDTHING_NOTHING) {
-				warningstream << "DEBUG click: iniciando hold, apuntando a algo" << std::endl;
-				interact(INTERACT_USE, m_last_pointed);
-				m_click_holding = true;
-				m_click_timer = 0.0f;
-				LocalPlayer *lp = m_env.getLocalPlayer();
-				if (lp)
-					lp->control.dig = true;
-			} else {
-				warningstream << "DEBUG click: nada apuntado, esperando" << std::endl;
-			}
+			// Iniciar un nuevo "hold": pulsar. No exigimos apuntar a algo,
+			// el server decidira si dispara o hace click.
+			interact(INTERACT_USE, m_last_pointed);
+			m_click_holding = true;
+			m_click_timer = 0.0f;
+			LocalPlayer *lp = m_env.getLocalPlayer();
+			if (lp)
+				lp->control.dig = true;
 		} else {
-			// Mantenemos presionado hasta cumplir la duración
+			// Mantenemos presionado hasta cumplir la duracion
 			m_click_timer += dtime;
-			if (m_click_timer >= m_click_duration) {
+			// Evitar cortar el hold antes de que el server haya podido disparar
+			if (m_click_timer >= m_click_duration &&
+					m_click_timer >= 0.05f) {
 				// Soltar
 				interact(INTERACT_STOP_DIGGING, m_last_pointed);
 				m_click_holding = false;
