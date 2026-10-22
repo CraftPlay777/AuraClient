@@ -646,20 +646,15 @@ void Client::step(float dtime)
 		if (!m_click_holding) {
 			// Iniciar un nuevo "hold": pulsar
 			if (m_last_pointed.type != POINTEDTHING_NOTHING) {
+				infostream << "DEBUG click: iniciando hold, apuntando a algo" << std::endl;
 				interact(INTERACT_USE, m_last_pointed);
 				m_click_holding = true;
 				m_click_timer = 0.0f;
-				// Forzar boton DIG pulsado (necesario para armas automaticas
-				// tipo rawf/ctf_ranged que leen get_player_control().LMB)
 				LocalPlayer *lp = m_env.getLocalPlayer();
 				if (lp)
 					lp->control.dig = true;
 			} else {
-				// Nada apuntado: esperar un poco antes de reintentar
-				m_click_timer += dtime;
-				if (m_click_timer >= 0.2f) {
-					m_click_timer = 0.0f;
-				}
+				infostream << "DEBUG click: nada apuntado, esperando" << std::endl;
 			}
 		} else {
 			// Mantenemos presionado hasta cumplir la duración
@@ -686,7 +681,6 @@ void Client::step(float dtime)
 		}
 	}
 	// ================================================
-	
 	
 	// Step environment (also handles player controls)
 	m_env.step(dtime);
@@ -1616,11 +1610,11 @@ void Client::sendPlayerPos()
 	player->last_wanted_range    = wanted_range;
 	player->last_movement_speed  = movement_speed;
 	player->last_movement_dir    = movement_dir;
-
-   // DEBUG temporal
-	if (m_click_enabled)
-		infostream << "DEBUG click: keyPressed=" << keyPressed
-			<< " dig=" << player->control.dig << std::endl;
+	
+	// DEBUG temporal
+	infostream << "DEBUG click: enabled=" << (int)m_click_enabled
+		<< " holding=" << (int)m_click_holding
+		<< " keyPressed=" << keyPressed << std::endl;
 			
 	NetworkPacket pkt(TOSERVER_PLAYERPOS, 12 + 12 + 4 + 4 + 4 + 1 + 1 + 1 + 4 + 4);
 
