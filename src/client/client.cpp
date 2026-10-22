@@ -646,7 +646,7 @@ void Client::step(float dtime)
 		if (!m_click_holding) {
 			// Iniciar un nuevo "hold": pulsar
 			if (m_last_pointed.type != POINTEDTHING_NOTHING) {
-				infostream << "DEBUG click: iniciando hold, apuntando a algo" << std::endl;
+				warningstream << "DEBUG click: iniciando hold, apuntando a algo" << std::endl;
 				interact(INTERACT_USE, m_last_pointed);
 				m_click_holding = true;
 				m_click_timer = 0.0f;
@@ -654,7 +654,7 @@ void Client::step(float dtime)
 				if (lp)
 					lp->control.dig = true;
 			} else {
-				infostream << "DEBUG click: nada apuntado, esperando" << std::endl;
+				warningstream << "DEBUG click: nada apuntado, esperando" << std::endl;
 			}
 		} else {
 			// Mantenemos presionado hasta cumplir la duración
@@ -1612,7 +1612,7 @@ void Client::sendPlayerPos()
 	player->last_movement_dir    = movement_dir;
 	
 	// DEBUG temporal
-	infostream << "DEBUG click: enabled=" << (int)m_click_enabled
+	warningstream << "DEBUG click: enabled=" << (int)m_click_enabled
 		<< " holding=" << (int)m_click_holding
 		<< " keyPressed=" << keyPressed << std::endl;
 			
