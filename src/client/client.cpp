@@ -641,45 +641,43 @@ void Client::step(float dtime)
 	}
 	// ==================================
 	
-	// ===== Hack client: auto-click (long hold) =====
+// ===== Hack client: auto-click (taps) =====
 	if (m_click_enabled && m_state == LC_Ready) {
-		if (!m_click_holding) {
-			// Iniciar un nuevo "hold": pulsar. No exigimos apuntar a algo,
-			// el server decidira si dispara o hace click.
+		m_click_timer += dtime;
+		if (m_click_timer >= m_click_interval) {
+			m_click_timer -= m_click_interval;
+
+			// Un tap = pulsar. Mandamos USE y activamos el bit dig.
 			interact(INTERACT_USE, m_last_pointed);
 			m_click_holding = true;
-			m_click_timer = 0.0f;
+
 			LocalPlayer *lp = m_env.getLocalPlayer();
 			if (lp)
 				lp->control.dig = true;
-		} else {
-			// Mantenemos presionado hasta cumplir la duracion
-			m_click_timer += dtime;
-			// Evitar cortar el hold antes de que el server haya podido disparar
-			if (m_click_timer >= m_click_duration &&
-					m_click_timer >= 0.05f) {
-				// Soltar
-				interact(INTERACT_STOP_DIGGING, m_last_pointed);
-				m_click_holding = false;
+
+			m_click_regen_done++;
+
+			if (m_click_regen_done >= m_click_regen) {
+				m_click_enabled = false;
+				m_click_regen_done = 0;
 				m_click_timer = 0.0f;
-				LocalPlayer *lp = m_env.getLocalPlayer();
+				m_click_holding = false;
 				if (lp)
 					lp->control.dig = false;
-				m_click_regen_done++;
-
-				if (m_click_regen_done >= m_click_regen) {
-					// Terminamos todas las repeticiones
-					m_click_enabled = false;
-					m_click_regen_done = 0;
-					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
-						utf8_to_wide("Auto-click: terminado ("
-							+ std::to_string(m_click_regen) + " repeticiones)")));
-				}
+				pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+					utf8_to_wide("Auto-click: terminado ("
+						+ std::to_string(m_click_regen) + " taps)")));
 			}
+		} else if (m_click_holding) {
+			// Soltar el bit tras un frame para simular el tap
+			m_click_holding = false;
+			LocalPlayer *lp = m_env.getLocalPlayer();
+			if (lp)
+				lp->control.dig = false;
 		}
 	}
 	// ================================================
-	
+		
 	// Step environment (also handles player controls)
 	m_env.step(dtime);
 	m_sound->step(dtime);
@@ -1948,12 +1946,12 @@ void Client::typeChatMessage(const std::wstring &message)
 			if (arg1 == "ok") {
 				if (!clickPending()) {
 					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
-						utf8_to_wide("No hay un .click pendiente. Usa primero .click {dur} {regen}")));
+						utf8_to_wide("No hay un .click pendiente. Usa primero .click {hits/seg} {reps}")));
 				} else {
 					clickConfirm();
 					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
 						utf8_to_wide("Auto-click ACTIVADO: "
-							+ std::to_string((int)getClickDuration()) + "s x "
+							+ std::to_string((int)(1.0f / getClickInterval())) + " hits/seg x "
 							+ std::to_string(getClickRegen()) + " reps")));
 					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
 						utf8_to_wide("Usa .click off para apagarlo")));
@@ -1963,18 +1961,24 @@ void Client::typeChatMessage(const std::wstring &message)
 				pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
 					utf8_to_wide("Auto-click OFF")));
 			} else {
-				float dur = 0.0f;
+				float hz = 0.0f;
 				int rep = 0;
-				bool ok1 = !arg1.empty() && (std::istringstream(arg1) >> dur);
+				bool ok1 = !arg1.empty() && (std::istringstream(arg1) >> hz);
 				bool ok2 = !arg2.empty() && (std::istringstream(arg2) >> rep);
 
-				if (!ok1 || !ok2 || dur <= 0.0f || rep <= 0) {
+				if (!ok1 || !ok2 || hz <= 0.0f || rep <= 0) {
 					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
-						utf8_to_wide("Uso: .click {segundos} {repeticiones}  (ej: .click 30 5)")));
+						utf8_to_wide("Uso: .click {hits/seg} {repeticiones}  (ej: .click 10 10)")));
 				} else {
-					setClickParams(dur, rep);
+					const float MAX_HZ = 20.0f;
+					if (hz > MAX_HZ) {
+						pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+							utf8_to_wide("Limite " + std::to_string((int)MAX_HZ) + " hits/seg, ajustando")));
+						hz = MAX_HZ;
+					}
+					setClickParams(1.0f / hz, rep);
 					pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
-						utf8_to_wide("Bien, asegurate de que el item seleccionado no abra interfaces. Usa .click ok para confirmar")));
+						utf8_to_wide("Bien, asegurate de apuntar a algo. Usa .click ok para confirmar")));
 				}
 			}
 			handled = true;
@@ -2059,9 +2063,9 @@ void Client::clickConfirm()
 	m_click_timer = 0.0f;
 }
 
-void Client::setClickParams(float duration, int regen)
+void Client::setClickParams(float interval, int regen)
 {
-	m_click_duration = duration;
+	m_click_interval = interval;
 	m_click_regen = regen;
 	m_click_pending = true;
 }
