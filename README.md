@@ -47,6 +47,32 @@ Lo especial de este cliente es que
 ```
 ---
 
+---
+### Click
+- Activa el auto-click. Hace N taps por segundo al item seleccionado.
+```
+.click {hits/seg} {repeticiones}
+```
+
+- Confirma y arranca el auto-click configurado.
+```
+.click ok
+```
+
+- Apaga el auto-click.
+```
+.click off
+```
+---
+
+---
+### Helpclient
+- Abre una ventana con la lista de todos los comandos del cliente y sus ejemplos.
+```
+.helpclient
+```
+---
+
 # Compilación 
 Puedes compilar este repo haciendo lo siguiente:
 
@@ -61,8 +87,8 @@ Puedes compilar este repo haciendo lo siguiente:
 - Listo
 
 # Información de HackClient
-Este hack client funciona a base de la modificación de 4 archivos dentro de src/client.
-En la V1 ,la carpeta /clientmods/ no tiene función ya que los mods hacks se manejan directo en c++ code.
+Este hack client funciona principalmente a base de la modificación de 4 archivos dentro de src/client/.
+La carpeta /clientmods/ se usa para los mods de ayuda, como el menú del comando `.helpclient`.
 
 # Instalación 
 - Ve a [Este sitio](https://github.com/CraftPlay777/AuraClient/releases/)

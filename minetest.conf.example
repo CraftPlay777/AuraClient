@@ -46,3 +46,4 @@ enable_esc_dialog = false
 enable_local_map_saving = true
 block_send_optimize_distance = 4
 max_block_send_distance = 12
+enable_client_modding = true
