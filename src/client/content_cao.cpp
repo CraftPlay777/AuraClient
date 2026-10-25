@@ -12,6 +12,7 @@
 #include "client/renderingengine.h"
 #include "client/sound.h"
 #include "client/texturesource.h"
+#include "texturepaths.h"
 #include "client/mapblock_mesh.h"
 #include "client/content_mapblock.h"
 #include "client/meshgen/collector.h"
@@ -1333,10 +1334,19 @@ void GenericCAO::updateTextures(std::string mod)
 				const auto texture_idx = m_animated_meshnode->getMesh()->getTextureSlot(i);
 				if (texture_idx >= m_prop.textures.size())
 					continue;
-				std::string texturestring = m_prop.textures[texture_idx];
-				if (texturestring.empty())
-					continue; // Empty texture string means don't modify that material
-				texturestring += mod;
+                std::string texturestring = m_prop.textures[texture_idx];
+
+                if (texturestring.empty())
+                    continue;
+
+                // AuraClient: cambiar solo la textura del jugador local.
+                if (m_is_local_player && texture_idx == 0) {
+                    if (!getTexturePath("auraclient_local_skin.png").empty()) {
+                        texturestring = "auraclient_local_skin.png";
+                    }
+                }
+
+                texturestring += mod;
 
 				// Set material flags and texture
 				video::SMaterial &material = m_animated_meshnode->getMaterial(i);

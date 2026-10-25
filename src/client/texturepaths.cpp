@@ -15,6 +15,45 @@
 static MutexedMap<std::string, std::string> g_texturename_to_path_cache;
 // Cached result of getTextureDirs()
 static MutexedVariable<std::vector<std::string>> g_texturedirs_cache;
+// AuraClient: buscar la skin local.
+// Devuelve una ruta solo si hay exactamente un PNG.
+static std::string getAuraLocalSkin()
+{
+    const std::string folders[] = {
+        porting::path_user + DIR_DELIM "skin",
+        porting::path_share + DIR_DELIM "skin"
+    };
+
+    for (const std::string &folder : folders) {
+        if (!fs::IsDir(folder))
+            continue;
+
+        std::string selected;
+        int count = 0;
+
+        for (const auto &entry : fs::GetDirListing(folder)) {
+            if (entry.dir)
+                continue;
+
+            const std::string &name = entry.name;
+
+            if (name.size() < 4 ||
+                    name.substr(name.size() - 4) != ".png")
+                continue;
+
+            ++count;
+            selected = folder + DIR_DELIM + name;
+        }
+
+        if (count == 1)
+            return selected;
+
+        if (count > 1)
+            return "";
+    }
+
+    return "";
+}
 
 void clearTextureNameCache()
 {
@@ -58,7 +97,15 @@ std::string getImagePath(std::string_view path)
 */
 std::string getTexturePath(const std::string &filename, bool *is_base_pack)
 {
-	std::string fullpath;
+    // AuraClient: nombre reservado para la skin del jugador local.
+    if (filename == "auraclient_local_skin.png") {
+        if (is_base_pack)
+            *is_base_pack = false;
+
+        return getAuraLocalSkin();
+    }
+
+    std::string fullpath;
 
 	// This can set a wrong value on cached textures, but is irrelevant because
 	// is_base_pack is only passed when initializing the textures the first time

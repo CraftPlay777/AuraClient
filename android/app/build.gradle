@@ -109,6 +109,12 @@ tasks.register("prepareAssets") {
 		copy {
 			from "${projRoot}/textures/base/pack" into "${assetsFolder}/textures/base/pack"
 		}
+		        // AuraClient: incluir la skin local en los recursos del APK.
+        copy {
+            from "${projRoot}/skin"
+            include "*.png"
+            into "${assetsFolder}/skin"
+        }
 		copy {
 			from "${localeFolder}" into "${assetsFolder}/locale"
 		}
