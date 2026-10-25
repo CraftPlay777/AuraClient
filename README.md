@@ -28,7 +28,6 @@ Carpeta local dentro de
 /storage/emulated/0/Android/data/net.minetest.auraclient/files/Minetest/skin/
 ```
 La cual hace que el único PNG que este allí sea tomado como textura skin local, lo interesante es que a diferencia de modificar el character.png dentro de las texturas base ,lo cual aplica la textura del carácter a todos los jugadores localmente dentro de un servidor, está función te permite hacer que la skin se aplique localmente únicamente a ti y haciendo así que los demás jugadores tengan las default del servidor.
----
 
 
 ## Comandos locales

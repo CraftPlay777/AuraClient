@@ -1,3 +1,4 @@
+
 name: Build Luanti APK
 
 on:
@@ -6,6 +7,7 @@ on:
 jobs:
   android:
     runs-on: ubuntu-22.04
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,28 +35,59 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
           set -euo pipefail
-          test -n "$KEYSTORE_BASE64" || { echo 'Falta KEYSTORE_BASE64'; exit 1; }
+
+          test -n "$KEYSTORE_BASE64" || {
+            echo "Falta KEYSTORE_BASE64"
+            exit 1
+          }
+
           echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/auraclient.jks"
-          test -s "$RUNNER_TEMP/auraclient.jks" || { echo 'Keystore vacio'; exit 1; }
+
+          test -s "$RUNNER_TEMP/auraclient.jks" || {
+            echo "Keystore vacio"
+            exit 1
+          }
 
           APK_DIR="android/app/build/outputs/apk/release"
-          APK="$APK_DIR/app-armeabi-v7a-release-unsigned.apk"
-          test -f "$APK" || { echo "No se encontro $APK"; find android/app/build/outputs/apk -name '*.apk'; exit 1; }
 
-          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
-          "$BUILD_TOOLS/zipalign" -f -p 4 "$APK" "$RUNNER_TEMP/auraclient-aligned.apk"
-          "$BUILD_TOOLS/apksigner" sign \
-            --ks "$RUNNER_TEMP/auraclient.jks" \
-            --ks-key-alias auraclient \
-            --ks-pass env:KEYSTORE_PASSWORD \
-            --key-pass env:KEYSTORE_PASSWORD \
-            --out "$APK_DIR/AuraClient-release-signed.apk" \
-            "$RUNNER_TEMP/auraclient-aligned.apk"
-          "$BUILD_TOOLS/apksigner" verify "$APK_DIR/AuraClient-release-signed.apk"
+          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" \
+            -mindepth 1 -maxdepth 1 -type d \
+            | sort -V | tail -n 1)"
+
+          for ABI in armeabi-v7a arm64-v8a x86 x86_64; do
+            APK="$APK_DIR/app-${ABI}-release-unsigned.apk"
+
+            if [ ! -f "$APK" ]; then
+              echo "[ERROR] No existe APK para $ABI"
+              find android/app/build/outputs/apk -name '*.apk'
+              exit 1
+            fi
+
+            echo "Firmando APK para $ABI..."
+
+            ALIGNED="$RUNNER_TEMP/${ABI}-aligned.apk"
+            SIGNED="$APK_DIR/AuraClient-${ABI}-release.apk"
+
+            "$BUILD_TOOLS/zipalign" -f -p 4 \
+              "$APK" "$ALIGNED"
+
+            "$BUILD_TOOLS/apksigner" sign \
+              --ks "$RUNNER_TEMP/auraclient.jks" \
+              --ks-key-alias auraclient \
+              --ks-pass env:KEYSTORE_PASSWORD \
+              --key-pass env:KEYSTORE_PASSWORD \
+              --out "$SIGNED" \
+              "$ALIGNED"
+
+            "$BUILD_TOOLS/apksigner" verify "$SIGNED"
+
+            echo "APK $ABI firmada correctamente."
+          done
 
       - name: Subir APK Release
         uses: actions/upload-artifact@v4
         with:
           name: AuraClient-Release
-          path: android/app/build/outputs/apk/release/AuraClient-release-signed.apk
+          path: android/app/build/outputs/apk/release/AuraClient-*-release.apk
           if-no-files-found: error
+          
