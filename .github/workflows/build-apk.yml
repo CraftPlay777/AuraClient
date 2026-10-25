@@ -1,11 +1,22 @@
+
 name: Build Luanti APK
 
 on:
   workflow_dispatch:
+    inputs:
+      build_type:
+        description: Tipo de compilacion
+        required: true
+        default: release
+        type: choice
+        options:
+          - release
+          - debug
 
 jobs:
   android:
     runs-on: ubuntu-22.04
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -14,20 +25,63 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: '17'
 
       - name: Instalar dependencias
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends gettext
 
-      - name: Compilar
+      - name: Compilar APK
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          if [ "${{ inputs.build_type }}" = "release" ]; then
+            ./gradlew assembleRelease
+          else
+            ./gradlew assembleDebug
+          fi
 
-      - uses: actions/upload-artifact@v4
+      - name: Firmar APK Release
+        if: inputs.build_type == 'release'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/auraclient.jks"
+
+          APK_DIR="android/app/build/outputs/apk/release"
+          APK="$APK_DIR/app-armeabi-v7a-release-unsigned.apk"
+          test -f "$APK"
+
+          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+
+          "$BUILD_TOOLS/zipalign" -f -p 4 \
+            "$APK" "$RUNNER_TEMP/auraclient-aligned.apk"
+
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks "$RUNNER_TEMP/auraclient.jks" \
+            --ks-key-alias auraclient \
+            --ks-pass env:KEYSTORE_PASSWORD \
+            --key-pass env:KEYSTORE_PASSWORD \
+            --out "$APK_DIR/AuraClient-release-signed.apk" \
+            "$RUNNER_TEMP/auraclient-aligned.apk"
+
+          "$BUILD_TOOLS/apksigner" verify \
+            "$APK_DIR/AuraClient-release-signed.apk"
+
+      - name: Subir APK Release
+        if: inputs.build_type == 'release'
+        uses: actions/upload-artifact@v4
         with:
-          name: luanti-apk
+          name: AuraClient-Release
+          path: android/app/build/outputs/apk/release/AuraClient-release-signed.apk
+          if-no-files-found: error
+
+      - name: Subir APK Debug
+        if: inputs.build_type == 'debug'
+        uses: actions/upload-artifact@v4
+        with:
+          name: AuraClient-Debug
           path: android/app/build/outputs/apk/debug/*.apk
